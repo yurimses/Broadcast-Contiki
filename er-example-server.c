@@ -140,11 +140,11 @@ extern resource_t res_sht11;
 PROCESS(test_timer_process, "Test timer");
 //AUTOSTART_PROCESSES(&test_timer_process);
 /*-------------------------------------------------*/
-PROCESS(broadcast_example_process, "UDP broadcast example process");
+//PROCESS(broadcast_example_process, "UDP broadcast example process");
 //AUTOSTART_PROCESSES(&broadcast_example_process);
 
 PROCESS(er_example_server, "Erbium Example Server");
-AUTOSTART_PROCESSES(&er_example_server,&test_timer_process,&broadcast_example_process);
+AUTOSTART_PROCESSES(&er_example_server,&test_timer_process);
 
 static void
 receiver(struct simple_udp_connection *c,
@@ -253,6 +253,13 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 PROCESS_THREAD(test_timer_process, ev, data){
 	PROCESS_BEGIN();
 	static struct etimer et;
+	//static struct etimer periodic_timer;
+  	//static struct etimer send_timer;
+  	uip_ipaddr_t addr;
+
+	simple_udp_register(&broadcast_connection, UDP_PORT,
+                      NULL, UDP_PORT,
+                      receiver);
 
     //Armazena o id do próprio mote  
   int my_id;
@@ -315,6 +322,9 @@ PROCESS_THREAD(test_timer_process, ev, data){
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
+	
+	uip_create_linklocal_allnodes_mcast(&addr);
+    	simple_udp_sendto(&broadcast_connection, "Test", 4, &addr);
           //Ativa o flag avisando sobre evento
         is_event=1;
 
@@ -345,7 +355,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	}
 PROCESS_END();
 }
-
+/*
 PROCESS_THREAD(broadcast_example_process, ev, data)
 {
   static struct etimer periodic_timer;
@@ -371,5 +381,6 @@ PROCESS_THREAD(broadcast_example_process, ev, data)
 
   PROCESS_END();
 }
+*/
 //###############################################################################
 
