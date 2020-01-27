@@ -102,6 +102,7 @@ define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%0
 unsigned int event_count=0; 
 
 static struct simple_udp_connection broadcast_connection;
+
 //#############################################################################
 
 
@@ -155,8 +156,16 @@ receiver(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-  printf("Data received on port %d from port %d with length %d\n",
-         receiver_port, sender_port, datalen);
+	printf("Dados recebidos na porta %d da porta %d com tamanho %d\n",
+	receiver_port, sender_port, datalen);
+	//Ativa o flag avisando sobre evento
+	if (info_event != NULL){
+        	is_event=1;
+		//Copia a informação do evento para array em res-hello.h
+        	//memcpy(info_event,str,sizeof(str));
+		printf("infoevent: %s\n", info_event);	
+	}
+
 }
 
 PROCESS_THREAD(er_example_server, ev, data)
@@ -287,9 +296,9 @@ PROCESS_THREAD(test_timer_process, ev, data){
     my_coordinate[2]=(unsigned int)(motes_coordinates[my_id][2]*100);
 
       //O mote exibe os valores X,Y e Z de sua coordenada
-    printf("Coordenada X: %u\n",my_coordinate[0]);
-    printf("Coordenada Y: %u\n",my_coordinate[1]);
-    printf("Coordenada Z: %u\n",my_coordinate[2]);
+    //printf("Coordenada X: %u\n",my_coordinate[0]);
+    //printf("Coordenada Y: %u\n",my_coordinate[1]);
+    //printf("Coordenada Z: %u\n",my_coordinate[2]);
 
       //Se valor do contador de eventos for menor que total de eventos
     if(event_count<total_events){
@@ -300,12 +309,11 @@ PROCESS_THREAD(test_timer_process, ev, data){
       event[2]=(unsigned int)(events_coordinates[event_count][2]*100);
 
         //Mote exibe os valores X,Y e Z do evento
-      printf("Coordenada X do evento: %u\n",event[0]);
-      printf("Coordenada Y do evento: %u\n",event[1]);
-      printf("Coordenada Z do evento: %u\n",event[2]);
+      //printf("Coordenada X do evento: %u\n",event[0]);
+      //printf("Coordenada Y do evento: %u\n",event[1]);
+      //printf("Coordenada Z do evento: %u\n",event[2]);
 
       int i;
-
         //Calcula a diferença entre coordenadas X,Y e Z do mote e do evento
       for(i=0;i<3;i++){
         if(event[i]>my_coordinate[i]){
@@ -322,22 +330,16 @@ PROCESS_THREAD(test_timer_process, ev, data){
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
-	
-	uip_create_linklocal_allnodes_mcast(&addr);
-    	simple_udp_sendto(&broadcast_connection, "Test", 4, &addr);
-          //Ativa o flag avisando sobre evento
-        is_event=1;
-
-        printf("DETECTADO EVENTO\n");
-
-        char str[100];
 
           //Informação sobre o evento detectado
-        snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
-        printf("String: %s\n",str);
-
-          //Copia a informação do evento para array em res-hello.h
-        memcpy(info_event,str,sizeof(str));
+        snprintf(info_event,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);      
+	
+	printf("Evento detectado\n");
+	printf("Enviando broadcast\n");
+	uip_create_linklocal_allnodes_mcast(&addr);
+    	simple_udp_sendto(&broadcast_connection, "Teste", 100, &addr);
+	
+          
       }
 
     }
