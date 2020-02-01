@@ -48,6 +48,7 @@
 #include "sys/ctimer.h"
 #include "sys/etimer.h"
 #include "net/ip/uip.h"
+#include "net/ip/uip-debug.h"
 #include "net/ipv6/uip-ds6.h"
 #include "simple-udp.h"
 
@@ -79,10 +80,11 @@
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
 #endif
-
+/*
 #define DEBUG 0
 #if DEBUG
 #include <stdio.h>
+
 #define PRINTF(...) printf(__VA_ARGS__)
 define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]", ((uint8_t *)addr)[0], ((uint8_t *)addr)[1], ((uint8_t *)addr)[2], ((uint8_t *)addr)[3], ((uint8_t *)addr)[4], ((uint8_t *)addr)[5], ((uint8_t *)addr)[6], ((uint8_t *)addr)[7], ((uint8_t *)addr)[8], ((uint8_t *)addr)[9], ((uint8_t *)addr)[10], ((uint8_t *)addr)[11], ((uint8_t *)addr)[12], ((uint8_t *)addr)[13], ((uint8_t *)addr)[14], ((uint8_t *)addr)[15])
 #define PRINTLLADDR(lladdr) PRINTF("[%02x:%02x:%02x:%02x:%02x:%02x]", (lladdr)->addr[0], (lladdr)->addr[1], (lladdr)->addr[2], (lladdr)->addr[3], (lladdr)->addr[4], (lladdr)->addr[5])
@@ -91,7 +93,7 @@ define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%0
 #define PRINT6ADDR(addr)
 #define PRINTLLADDR(addr)
 #endif
-
+*/
 /*
  * Resources to be activated need to be imported through the extern keyword.
  * The build system automatically compiles the resources in the corresponding sub-directory.
@@ -102,7 +104,6 @@ define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%0
 unsigned int event_count=0; 
 
 static struct simple_udp_connection broadcast_connection;
-
 //#############################################################################
 
 
@@ -156,16 +157,11 @@ receiver(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-	printf("Dados recebidos na porta %d da porta %d com tamanho %d\n",
-	receiver_port, sender_port, datalen);
-	//Ativa o flag avisando sobre evento
-	if (info_event != NULL){
-        	is_event=1;
-		//Copia a informação do evento para array em res-hello.h
-        	//memcpy(info_event,str,sizeof(str));
-		printf("infoevent: %s\n", info_event);	
-	}
-
+	printf("Dados recebidos do end.: ");
+  	uip_debug_ipaddr_print(sender_addr);
+	//PRINT6ADDR(sender_addr);
+	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
+        receiver_port, sender_port, datalen, data);
 }
 
 PROCESS_THREAD(er_example_server, ev, data)
@@ -262,8 +258,6 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 PROCESS_THREAD(test_timer_process, ev, data){
 	PROCESS_BEGIN();
 	static struct etimer et;
-	//static struct etimer periodic_timer;
-  	//static struct etimer send_timer;
   	uip_ipaddr_t addr;
 
 	simple_udp_register(&broadcast_connection, UDP_PORT,
@@ -296,9 +290,9 @@ PROCESS_THREAD(test_timer_process, ev, data){
     my_coordinate[2]=(unsigned int)(motes_coordinates[my_id][2]*100);
 
       //O mote exibe os valores X,Y e Z de sua coordenada
-    //printf("Coordenada X: %u\n",my_coordinate[0]);
-    //printf("Coordenada Y: %u\n",my_coordinate[1]);
-    //printf("Coordenada Z: %u\n",my_coordinate[2]);
+    printf("Coordenada X: %u\n",my_coordinate[0]);
+    printf("Coordenada Y: %u\n",my_coordinate[1]);
+    printf("Coordenada Z: %u\n",my_coordinate[2]);
 
       //Se valor do contador de eventos for menor que total de eventos
     if(event_count<total_events){
@@ -309,11 +303,12 @@ PROCESS_THREAD(test_timer_process, ev, data){
       event[2]=(unsigned int)(events_coordinates[event_count][2]*100);
 
         //Mote exibe os valores X,Y e Z do evento
-      //printf("Coordenada X do evento: %u\n",event[0]);
-      //printf("Coordenada Y do evento: %u\n",event[1]);
-      //printf("Coordenada Z do evento: %u\n",event[2]);
+      printf("Coordenada X do evento: %u\n",event[0]);
+      printf("Coordenada Y do evento: %u\n",event[1]);
+      printf("Coordenada Z do evento: %u\n",event[2]);
 
       int i;
+
         //Calcula a diferença entre coordenadas X,Y e Z do mote e do evento
       for(i=0;i<3;i++){
         if(event[i]>my_coordinate[i]){
@@ -330,16 +325,23 @@ PROCESS_THREAD(test_timer_process, ev, data){
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
+	
+	uip_create_linklocal_allnodes_mcast(&addr);
+    	simple_udp_sendto(&broadcast_connection, "Test", 4, &addr);
+
+          //Ativa o flag avisando sobre evento
+        is_event=1;
+
+        printf("DETECTADO EVENTO\n");
+
+        char str[100];
 
           //Informação sobre o evento detectado
-        snprintf(info_event,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);      
-	
-	printf("Evento detectado\n");
-	printf("Enviando broadcast\n");
-	uip_create_linklocal_allnodes_mcast(&addr);
-    	simple_udp_sendto(&broadcast_connection, "Teste", 100, &addr);
-	
-          
+        snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
+        printf("String: %s\n",str);
+
+          //Copia a informação do evento para array em res-hello.h
+        memcpy(info_event,str,sizeof(str));
       }
 
     }
@@ -357,32 +359,5 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	}
 PROCESS_END();
 }
-/*
-PROCESS_THREAD(broadcast_example_process, ev, data)
-{
-  static struct etimer periodic_timer;
-  static struct etimer send_timer;
-  uip_ipaddr_t addr;
-
-  PROCESS_BEGIN();
-
-  simple_udp_register(&broadcast_connection, UDP_PORT,
-                      NULL, UDP_PORT,
-                      receiver);
-
-  etimer_set(&periodic_timer, SEND_INTERVAL);
-  while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-    etimer_reset(&periodic_timer);
-    etimer_set(&send_timer, SEND_TIME);	
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&send_timer));
-    printf("Enviando broadcast\n");
-    uip_create_linklocal_allnodes_mcast(&addr);
-    simple_udp_sendto(&broadcast_connection, "Test", 4, &addr);
-  }
-
-  PROCESS_END();
-}
-*/
 //###############################################################################
 
