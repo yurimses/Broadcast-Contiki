@@ -75,27 +75,7 @@ receiver(struct simple_udp_connection *c,
 	//uip_debug_ipaddr_print(testeaddr);
 	//printf("\n");
 }
-/*
-static void
-receiver_inverse(struct simple_udp_connection *c,
-         const uip_ipaddr_t *receiver_addr,
-         uint16_t sender_port,
-         const uip_ipaddr_t *sender_addr,
-         uint16_t receiver_port,
-         const uint8_t *data,
-         uint16_t datalen)
-{
-  	printf("Dados recebidos do end.: ");
-  	uip_debug_ipaddr_print(receiver_addr);
-	//testeaddr = receiver_addr;
-	printf(" ... ");
-	uip_debug_ipaddr_print(sender_addr);
-	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
-        receiver_port, sender_port, datalen, data);
-	//uip_debug_ipaddr_print(testeaddr);
-	//printf("\n");
-}
-*/
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(broadcast_example_process, ev, data)
 {
@@ -111,9 +91,6 @@ PROCESS_THREAD(broadcast_example_process, ev, data)
   simple_udp_register(&broadcast_connection, UDP_PORT,
                       NULL, UDP_PORT,
                       receiver);
-  //simple_udp_register(&broadcast_connection, UDP_PORT,
-  //                    NULL, UDP_PORT, receiver_inverse);
-    
   testeaddr = &teste;
   etimer_set(&periodic_timer, SEND_INTERVAL);
   while(1) {
