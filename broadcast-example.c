@@ -50,7 +50,7 @@
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
 
 static struct simple_udp_connection broadcast_connection;
-//static uip_ipaddr_t *testeaddr;
+static uip_ipaddr_t *testeaddr;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(broadcast_example_process, "UDP broadcast example process");
@@ -69,7 +69,7 @@ receiver(struct simple_udp_connection *c,
   	uip_debug_ipaddr_print(sender_addr);
 	printf(" ... ");
 	uip_debug_ipaddr_print(receiver_addr);
-	//testeaddr = receiver_addr;
+	testeaddr = sender_addr;
 	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
         receiver_port, sender_port, datalen, data);
 	//uip_debug_ipaddr_print(testeaddr);
@@ -102,7 +102,7 @@ PROCESS_THREAD(broadcast_example_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
   uip_ipaddr_t addr;
-  //uip_ipaddr_t teste;
+  uip_ipaddr_t teste;
   char msg[20];
   sprintf(msg, "yu");
 
@@ -114,7 +114,7 @@ PROCESS_THREAD(broadcast_example_process, ev, data)
   //simple_udp_register(&broadcast_connection, UDP_PORT,
   //                    NULL, UDP_PORT, receiver_inverse);
     
-  //testeaddr = &teste;
+  testeaddr = &teste;
   etimer_set(&periodic_timer, SEND_INTERVAL);
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
@@ -125,7 +125,8 @@ PROCESS_THREAD(broadcast_example_process, ev, data)
     printf("Enviando broadcast\n");
     uip_create_linklocal_allnodes_mcast(&addr);
     simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr);
-    
+    uip_debug_ipaddr_print(testeaddr);
+    printf("\n");
     //uip_create_linklocal_allnodes_mcast(&teste);
     //simple_udp_sendto(&broadcast_connection, "oi", 3, &teste);
     
