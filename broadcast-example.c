@@ -50,7 +50,7 @@
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
 
 static struct simple_udp_connection broadcast_connection;
-static uip_ipaddr_t *testeaddr;
+static uip_ipaddr_t *testeaddr; //endereço para adicionar
 
 /*---------------------------------------------------------------------------*/
 PROCESS(broadcast_example_process, "UDP broadcast example process");
