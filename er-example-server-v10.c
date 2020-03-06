@@ -195,7 +195,7 @@ receiver(struct simple_udp_connection *c,
 	//printf("%c\n", data[datalen-1]);
 	
 	
-	if (data[datalen-1] == '1'){
+	if (data[datalen-1] == '1' && is_event == 1){
 		simple_udp_register(&broadcast_connection_reply, UDP_PORT, NULL, UDP_PORT, receiver);	
 		uip_create_linklocal_allnodes_mcast(&addr_test);
 		simple_udp_sendto(&broadcast_connection_reply, "oi", 3 , &addr_test);
