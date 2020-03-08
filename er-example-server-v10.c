@@ -197,7 +197,7 @@ receiver(struct simple_udp_connection *c,
 	//printf("%c\n", data[datalen-1]);
 	
 	
-	if (data[datalen-1] == '1' && is_event == 1){
+	if (((data[datalen-1] == '1') || (data[datalen-1] == '2')) && is_event == 1){
 		simple_udp_register(&broadcast_connection_reply, UDP_PORT, NULL, UDP_PORT, receiver);	
 		uip_create_linklocal_allnodes_mcast(&addr_test);
 		simple_udp_sendto(&broadcast_connection_reply, "oi", 3 , &addr_test);
@@ -337,7 +337,6 @@ PROCESS_THREAD(test_timer_process, ev, data){
   
       //Mote busca o seu próprio id e subtrai 2 de seu valor   
     my_id=node_id-2;
-    priority = priority_events[my_id];
     /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
       no arquivo coordinate.h e armazena elas no vetor*/
     my_coordinate[0]=(unsigned int)(motes_coordinates[my_id][0]*100);
@@ -378,14 +377,17 @@ PROCESS_THREAD(test_timer_process, ev, data){
       unsigned distance = (unsigned int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 
       printf("Distancia: %u\n",distance);
-      printf("Teste: %d\n", priority);
+      
+        //Estabelecendo prioridade para cada evento
+      priority = priority_events[event_count];
+      //printf("Teste: %d\n", priority);
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
 	is_event=1;	
 	printf("Detectou evento\n");
 	printf("Enviando broadcast\n");	
-	sprintf(msg, "Mote: %d aconteceu 1", sender_id);
+	sprintf(msg, "Mote: %d aconteceu com prioridade %d", sender_id, priority);
 	uip_create_linklocal_allnodes_mcast(&addr); //Set IP address addr to the link local all-nodes multicast address
     	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); //Send a UDP packet to a specified IP address.
 		
