@@ -222,31 +222,32 @@ public class ListEvents{
   public String get_path(){
     return path;
   }
-  
+   //Salva as prioridades dos eventos
   public void save_priority(){
 	    try{
 	        	//Cria o arquivo priority_events.h
 		      System.setOut(new PrintStream(new FileOutputStream(get_path()+"priority_events.h", false)));
 		        //Conteúdo que será salvo no arquivo
-		      System.out.println("int total_events="+get_time()+";");
+		      System.out.println("int total_priorities_events="+get_time()+";");
 		      System.out.println("int priority_events["+get_time()+"]={");
-		        //Chama o gerador de eventos aleatórios
+		        //Chama o gerador de prioridade de eventos 
+			//1 para crítico e e 2 para não crítico
 		      generate_priority();
 		      System.out.println("};\n");
 
 	       }catch(FileNotFoundException ex){System.out.println("Erro ao criar arquivo!");}; 
   }
-  
+   //Gera prioridades para os eventos de forma aleatória
   public void generate_priority() {
 	  for(int i=0; i<get_time(); i++) {
 		  if(i<get_time()-1) {
-			  System.out.println("{"+random_priority()+"},");
+			  System.out.println(random_priority()+",");
 		  }else {
-			  System.out.println("{"+random_priority()+"}");
+			  System.out.println(random_priority());
 		  }
 	  }
   }
-  
+   //Retorna uma prioridade (int)
   public int random_priority() {
 	  return (int) (Math.random() * range)+min;
   }

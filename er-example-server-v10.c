@@ -60,6 +60,8 @@
 #include "events.h"
 //Arquivo com flag sobre evento e a informação sobre ele
 #include "resources/res-hello.h"
+//Arquivo com as informações de prioridade de eventos
+#include "priority_events.h"
 
 //Ariker> add this line
 //#include "../apps/powertrace/powertrace.h"
@@ -326,13 +328,16 @@ PROCESS_THREAD(test_timer_process, ev, data){
     //Vetor para armazenar a diferença na subtração entre as coordenadas
   unsigned int diff[3];
 
+   //Prioridade
+  unsigned int priority;
+
 	while(1) {
 		etimer_set(&et, CLOCK_SECOND*SECONDS);
 		PROCESS_WAIT_EVENT();
   
       //Mote busca o seu próprio id e subtrai 2 de seu valor   
     my_id=node_id-2;
-
+    priority = priority_events[my_id];
     /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
       no arquivo coordinate.h e armazena elas no vetor*/
     my_coordinate[0]=(unsigned int)(motes_coordinates[my_id][0]*100);
@@ -373,6 +378,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
       unsigned distance = (unsigned int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 
       printf("Distancia: %u\n",distance);
+      printf("Teste: %d\n", priority);
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
