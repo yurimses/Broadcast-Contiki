@@ -573,7 +573,7 @@ public class AddMoteDialog extends JDialog {
                //Chama a função que salva as coordenadas em arquivo
              obj.save_coordinate();
 
-	      //Chama a função que salva as prioridades em arquivo
+	      //Chama a função que salva as prioridades dos eventos em arquivo
 	     obj.save_priority();
 //#############################################################################
 

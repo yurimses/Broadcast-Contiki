@@ -35,8 +35,10 @@ public class ListEvents{
   private double[] coordinateY;
   private double[] coordinateZ;
   private int startX,endX,startY,endY,startZ,endZ;
-  private int max = 2; 
-  private int min = 1; 
+  //private int max = 2; 
+  //private int min = 1; 
+  private int max = 100;
+  private int min = 1;
   private int range = max - min + 1;
   
     //Armazena caminho onde os arquivos.h serão salvos
@@ -249,6 +251,12 @@ public class ListEvents{
   }
    //Retorna uma prioridade (int)
   public int random_priority() {
-	  return (int) (Math.random() * range)+min;
+	int number = (int) (Math.random() * range);
+	if ((number) <= 75) {
+		return 2;	
+	}else{
+		return 1;	
+	}	  
+	//return (int) (Math.random() * range)+ min;
   }
 }
