@@ -251,8 +251,8 @@ public class ListEvents{
   }
    //Retorna uma prioridade (int)
   public int random_priority() {
-	int number = (int) (Math.random() * range);
-	if ((number) <= 75) {
+	int number = (int) (Math.random() * 100 - 1) + 1;
+	if ((number) <= 95) {
 		return 2;	
 	}else{
 		return 1;	
