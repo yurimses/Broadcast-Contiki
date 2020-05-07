@@ -108,9 +108,10 @@ define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%0
 unsigned int event_count=0; 
 
 static struct simple_udp_connection broadcast_connection;
-//static struct simple_udp_connection broadcast_connection_reply;
 
-//static struct simple_udp_connection unicast_connection;
+static int count = 0;
+
+static int vt[10];
 //#############################################################################
 
 
@@ -154,24 +155,7 @@ PROCESS(test_timer_process, "Test timer");
 
 PROCESS(er_example_server, "Erbium Example Server");
 AUTOSTART_PROCESSES(&er_example_server,&test_timer_process);
-/*
-static void
-receiver1(struct simple_udp_connection *c,
-         const uip_ipaddr_t *sender_addr,
-         uint16_t sender_port,
-         const uip_ipaddr_t *receiver_addr,
-         uint16_t receiver_port,
-         const uint8_t *data,
-         uint16_t datalen)
-{		
-	printf("Dados recebidos do end.: ");
-  	uip_debug_ipaddr_print(sender_addr);
-	//PRINT6ADDR(&sender_addr);
-	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
-	receiver_port, sender_port, datalen, data);
-	printf("testando receiver 1\n");	
-}
-*/
+
 static void
 receiver(struct simple_udp_connection *c,
          const uip_ipaddr_t *sender_addr,
@@ -183,7 +167,7 @@ receiver(struct simple_udp_connection *c,
          void (*receiver1)(void)*/)
 {
 		
-	uip_ipaddr_t addr_test;			
+	//uip_ipaddr_t addr_test;			
 	
 	//CONSULTA
 	printf("Dados recebidos do end.: ");
@@ -192,19 +176,25 @@ receiver(struct simple_udp_connection *c,
 	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
         receiver_port, sender_port, datalen, data);
 	//printf("%c\n", data[datalen-1]);
-	
-	
-	if (((data[datalen-1] == '1') || (data[datalen-1] == '2')) /*&& is_event == 1*/){	
-		uip_create_linklocal_allnodes_mcast(&addr_test);
-		simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_test);
-		printf("reply\n");
-		
-		
-	}
+	int type_reply = (int) data[datalen-1] - 48;
+	int j = 0;
+	vt[count] = type_reply;
+	for (j = 0; j<10; j++){
+		printf("%d ", vt[j]);
+	}	
+
+	printf("\ncontador: %d\n", count);
+	//printf("event_count do receiver: %d\n", event_count);	
+	count++;
+	//Espaço dedicado a confirmação de que recebeu o broadcast
+	//if (((data[datalen-1] == '1') || (data[datalen-1] == '2')) /*&& is_event == 1*/){	
+	//	printf("reply\n");		
+		//uip_create_linklocal_allnodes_mcast(&addr_test);
+		//simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_test);
+	//}
 	
 
 }
-// 0 não ocorreu
 // 1 ocorreu evento crítico
 // 2 ocorreu evento não crítico
 
@@ -332,7 +322,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	while(1) {
 		etimer_set(&et, CLOCK_SECOND*SECONDS);
 		PROCESS_WAIT_EVENT();
-  
+		count = 0; 		
       //Mote busca o seu próprio id e subtrai 2 de seu valor   
     my_id=node_id-2;
     /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
@@ -403,13 +393,16 @@ PROCESS_THREAD(test_timer_process, ev, data){
       }
 
     }
+    //printf("event_count do process %d\n", event_count);
 
       //Acrescenta 1 para o próximo evento
+    //count = 0;
     event_count++;  
-
+    //count = 0;
 
       //Se o tempo estimado expirar, reinicia a contagem
     if(etimer_expired(&et)) {
+	    //count = 0;
 	    etimer_reset(&et);
 	  }
 

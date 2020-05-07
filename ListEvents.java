@@ -251,12 +251,41 @@ public class ListEvents{
   }
    //Retorna uma prioridade (int)
   public int random_priority() {
-	int number = (int) (Math.random() * 100 - 1) + 1;
-	if ((number) <= 95) {
+	int number = (int) (Math.random() * range);
+	if ((number) <= 75) {
 		return 2;	
 	}else{
 		return 1;	
 	}	  
 	//return (int) (Math.random() * range)+ min;
+  }
+
+  public void save_realsim_events(){
+	    try{
+	        	//Cria o arquivo priority_events.h
+		      System.setOut(new PrintStream(new FileOutputStream(get_path()+"realsim_events.h", false)));
+		        //Conteúdo que será salvo no arquivo
+		      for(int i = 1; i<=get_count_motes()+1; i++) {		      		
+				System.out.println("0;addnode;"+(float) i);
+                      }
+		      
+		      for(int i = 1; i<=get_count_motes()+1; i++) {	
+				if(i == 1){	      		
+					System.out.println("nodetype;sinkNode;"+(float) i);
+				}else{
+					System.out.println("nodetype;defaultNode;"+(float) i);
+				}
+                      }
+		      
+                      for(int i = 1; i<=get_count_motes()+1; i++) {	
+		      		for(int j = 1; j<=get_count_motes()+1; j++) {
+					if (i != j){	
+		      				System.out.println("0;setedge;"+(float) i+";"+(float) j+";100;-10;105");
+					}
+                      		}		
+                      }
+		      
+
+	       }catch(FileNotFoundException ex){System.out.println("Erro ao criar arquivo!");}; 
   }
 }

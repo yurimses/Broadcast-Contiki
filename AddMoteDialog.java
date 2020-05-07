@@ -575,6 +575,9 @@ public class AddMoteDialog extends JDialog {
 
 	      //Chama a função que salva as prioridades dos eventos em arquivo
 	     obj.save_priority();
+
+	      //Chama a função que salva eventos para o realsim
+	     obj.save_realsim_events();
 //#############################################################################
 
 
