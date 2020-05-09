@@ -292,18 +292,16 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 //###############################################################################
 PROCESS_THREAD(test_timer_process, ev, data){
 	char msg[100];
-  	//sprintf(msg, "yuri");	
 
 	PROCESS_BEGIN();
+	printf("process begin %d\n", count);
 	static struct etimer et;
   	uip_ipaddr_t addr;
 
 	simple_udp_register(&broadcast_connection, UDP_PORT,
                       NULL, UDP_PORT,
-                      receiver); //Register a UDP connection
-	//simple_udp_register(&broadcast_connection1, UDP_PORT,
-                      //NULL, UDP_PORT,
-                      //receiver1);
+                      receiver); 
+
     //Armazena o id do próprio mote  
   int my_id;
 
@@ -322,6 +320,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	while(1) {
 		etimer_set(&et, CLOCK_SECOND*SECONDS);
 		PROCESS_WAIT_EVENT();
+		printf("process wait event %d\n", count);
 		//count = 0; 		
       //Mote busca o seu próprio id e subtrai 2 de seu valor   
     my_id=node_id-2;
@@ -373,12 +372,13 @@ PROCESS_THREAD(test_timer_process, ev, data){
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
       if((distance/100)<=RANGE){
 	is_event=1;	
+	printf("if distance %d\n", count);
 	printf("Detectou evento\n");
 	printf("Enviando broadcast\n");	
 	sprintf(msg, "Mote: %d aconteceu com nivel %d", sender_id, priority);
 	uip_create_linklocal_allnodes_mcast(&addr); //Set IP address addr to the link local all-nodes multicast address
     	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); //Send a UDP packet to a specified IP address.
-		
+	printf("if dps broadcast %d\n", count);	
 	//Ativa o flag avisando sobre evento
         
 
@@ -393,7 +393,6 @@ PROCESS_THREAD(test_timer_process, ev, data){
       }
 
     }
-    //printf("event_count do process %d\n", event_count);
 
       //Acrescenta 1 para o próximo evento
     //count = 0;
@@ -403,9 +402,15 @@ PROCESS_THREAD(test_timer_process, ev, data){
       //Se o tempo estimado expirar, reinicia a contagem
     if(etimer_expired(&et)) {
 	    //count = 0;
-	    etimer_reset(&et);
+            int k;
 	    count = 0;
-	  }
+	    for (k = 0; k < 10; k++){
+	    	vt[k] = 0;
+		printf("vet %d ",vt[k]);
+	    }
+	    printf("\n");
+	    etimer_reset(&et);
+    }
     
     if(count != 0){
 	count = 0;
