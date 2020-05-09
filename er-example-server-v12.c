@@ -411,6 +411,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	    printf("\n");
 	    etimer_reset(&et);
     }
+    printf("if dps etimer reset %d\n", count);
     
     if(count != 0){
 	count = 0;
