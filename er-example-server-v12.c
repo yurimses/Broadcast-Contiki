@@ -303,122 +303,126 @@ PROCESS_THREAD(test_timer_process, ev, data){
                       receiver); 
 
     //Armazena o id do próprio mote  
-  int my_id;
+    int my_id;
 
     //Vetor para as coordenadas X,Y e Z do próprio mote
-  unsigned int my_coordinate[3];
+    unsigned int my_coordinate[3];
 
     //Vetor para as coordenadas dos eventos
-  unsigned int event[3];
+    unsigned int event[3];
 
     //Vetor para armazenar a diferença na subtração entre as coordenadas
-  unsigned int diff[3];
+    unsigned int diff[3];
 
-   //Prioridade
-  unsigned int priority;
+    //Prioridade
+    unsigned int priority;
 
 	while(1) {
-		etimer_set(&et, CLOCK_SECOND*SECONDS);
-		PROCESS_WAIT_EVENT();
+	    etimer_set(&et, CLOCK_SECOND*SECONDS);
+	    PROCESS_WAIT_EVENT();
 		printf("process wait event %d\n", count);
 		//count = 0; 		
-      //Mote busca o seu próprio id e subtrai 2 de seu valor   
-    my_id=node_id-2;
-    /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
-      no arquivo coordinate.h e armazena elas no vetor*/
-    my_coordinate[0]=(unsigned int)(motes_coordinates[my_id][0]*100);
-    my_coordinate[1]=(unsigned int)(motes_coordinates[my_id][1]*100);
-    my_coordinate[2]=(unsigned int)(motes_coordinates[my_id][2]*100);
+        //Mote busca o seu próprio id e subtrai 2 de seu valor   
+        my_id=node_id-2;
+        /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
+        no arquivo coordinate.h e armazena elas no vetor*/
+        my_coordinate[0]=(unsigned int)(motes_coordinates[my_id][0]*100);
+        my_coordinate[1]=(unsigned int)(motes_coordinates[my_id][1]*100);
+        my_coordinate[2]=(unsigned int)(motes_coordinates[my_id][2]*100);
 
-      //O mote exibe os valores X,Y e Z de sua coordenada
-    //printf("Coordenada X: %u\n",my_coordinate[0]);
-    //printf("Coordenada Y: %u\n",my_coordinate[1]);
-    //printf("Coordenada Z: %u\n",my_coordinate[2]);
+        //O mote exibe os valores X,Y e Z de sua coordenada
+        //printf("Coordenada X: %u\n",my_coordinate[0]);
+        //printf("Coordenada Y: %u\n",my_coordinate[1]);
+        //printf("Coordenada Z: %u\n",my_coordinate[2]);
 
-      //Se valor do contador de eventos for menor que total de eventos
-    if(event_count<total_events){
-         /*Mote busca a coordenada X,Y e Z dentro da matriz de eventos
-          no arquivo events.h e armazena elas no vetor*/
-      event[0]=(unsigned int)(events_coordinates[event_count][0]*100);
-      event[1]=(unsigned int)(events_coordinates[event_count][1]*100);
-      event[2]=(unsigned int)(events_coordinates[event_count][2]*100);
+        //Se valor do contador de eventos for menor que total de eventos
+        if(event_count<total_events){
+            /*Mote busca a coordenada X,Y e Z dentro da matriz de eventos
+            no arquivo events.h e armazena elas no vetor*/
+            event[0]=(unsigned int)(events_coordinates[event_count][0]*100);
+            event[1]=(unsigned int)(events_coordinates[event_count][1]*100);
+            event[2]=(unsigned int)(events_coordinates[event_count][2]*100);
 
-        //Mote exibe os valores X,Y e Z do evento
-      //printf("Coordenada X do evento: %u\n",event[0]);
-      //printf("Coordenada Y do evento: %u\n",event[1]);
-      //printf("Coordenada Z do evento: %u\n",event[2]);
+            //Mote exibe os valores X,Y e Z do evento
+            //printf("Coordenada X do evento: %u\n",event[0]);
+            //printf("Coordenada Y do evento: %u\n",event[1]);
+            //printf("Coordenada Z do evento: %u\n",event[2]);
 
-      int i;
-      int sender_id = node_id;
+            int i;
+            int sender_id = node_id;
 
-        //Calcula a diferença entre coordenadas X,Y e Z do mote e do evento
-      for(i=0;i<3;i++){
-        if(event[i]>my_coordinate[i]){
-          diff[i]= event[i]-my_coordinate[i];  
-        }else{
-          diff[i]=my_coordinate[i]-event[i];
-        }
-      }
+            //Calcula a diferença entre coordenadas X,Y e Z do mote e do evento
+            for(i=0;i<3;i++){
+                if(event[i]>my_coordinate[i]){
+                    diff[i]= event[i]-my_coordinate[i];  
+                }else{
+                    diff[i]=my_coordinate[i]-event[i];
+                }
+            }
 
-        //Calcula a distância euclidiana entre o mote e o evento
-      unsigned distance = (unsigned int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
+            //Calcula a distância euclidiana entre o mote e o evento
+            unsigned distance = (unsigned int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 
-      printf("Distancia: %u\n",distance);
+            printf("Distancia: %u\n",distance);
       
-        //Estabelecendo prioridade para cada evento
-      priority = priority_events[event_count];
-      //printf("Teste: %d\n", priority);
+            //Estabelecendo prioridade para cada evento
+            priority = priority_events[event_count];
+            //printf("Teste: %d\n", priority);
 
-        //Se a distancia calculada for menor igual ao range, o mote exibe aviso
-      if((distance/100)<=RANGE){
-	is_event=1;	
-	printf("if distance %d\n", count);
-	printf("Detectou evento\n");
-	printf("Enviando broadcast\n");	
-	sprintf(msg, "Mote: %d aconteceu com nivel %d", sender_id, priority);
-	uip_create_linklocal_allnodes_mcast(&addr); //Set IP address addr to the link local all-nodes multicast address
-    	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); //Send a UDP packet to a specified IP address.
-	printf("if dps broadcast %d\n", count);	
-	//Ativa o flag avisando sobre evento
-        
+            //Se a distancia calculada for menor igual ao range, o mote exibe aviso
+            if((distance/100)<=RANGE){
+    	        is_event=1;	
+    	        printf("if distance %d\n", count);
+    	        printf("Detectou evento\n");
+    	        printf("Enviando broadcast\n");	
+    	        sprintf(msg, "Mote: %d aconteceu com nivel %d", sender_id, priority);
+    	        uip_create_linklocal_allnodes_mcast(&addr); //Set IP address addr to the link local all-nodes multicast address
+        	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); //Send a UDP packet to a specified IP address.
+    	        printf("if dps broadcast %d\n", count);	
+    	
+    	        //Ativa o flag avisando sobre evento
+            
+    
+                char str[100];
+    
+                //Informação sobre o evento detectado
+                snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
+                //printf("String: %s\n",str);
+    
+                //Copia a informação do evento para array em res-hello.h
+                memcpy(info_event,str,sizeof(str));
+            }
 
-        char str[100];
+        } //fim do event_count<total_events
 
-          //Informação sobre o evento detectado
-        snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
-        //printf("String: %s\n",str);
+        //Acrescenta 1 para o próximo evento
+        //count = 0;
+        event_count++;  
+        //count = 0;
 
-          //Copia a informação do evento para array em res-hello.h
-        memcpy(info_event,str,sizeof(str));
-      }
-
-    }
-
-      //Acrescenta 1 para o próximo evento
-    //count = 0;
-    event_count++;  
-    //count = 0;
-
-      //Se o tempo estimado expirar, reinicia a contagem
-    if(etimer_expired(&et)) {
+        //Se o tempo estimado expirar, reinicia a contagem
+        if(etimer_expired(&et)) {
 	    //count = 0;
             int k;
-	    count = 0;
-	    for (k = 0; k < 10; k++){
-	    	vt[k] = 0;
-		printf("vet %d ",vt[k]);
-	    }
-	    printf("\n");
-	    etimer_reset(&et);
-    }
-    printf("if dps etimer reset %d\n", count);
-    
-    if(count != 0){
-	count = 0;
-    }
-
-
+	        count = 0;
+	        for (k = 0; k < 10; k++){
+	    	    vt[k] = 0;
+		        //printf("vet %d ",vt[k]);
+	        }
+	        etimer_reset(&et);
+        }
+        printf("if dps etimer reset %d\n", count);
+        int l;
+	for(l = 0; l < 10; l++){
+		printf("vet %d ", vt[l]);
 	}
+	printf("\n");
+        if(count != 0){
+    	    count = 0;
+        }
+
+
+	} //fim do while
 PROCESS_END();
 }
 //###############################################################################
