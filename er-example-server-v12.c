@@ -109,6 +109,7 @@ unsigned int event_count=0;
 
 static struct simple_udp_connection broadcast_connection;
 
+//Variáveis para vetor que armazena classificação / nível do evento
 static int count = 0;
 
 static int vt[10];
@@ -163,35 +164,37 @@ receiver(struct simple_udp_connection *c,
          const uip_ipaddr_t *receiver_addr,
          uint16_t receiver_port,
          const uint8_t *data,
-         uint16_t datalen/*,
-         void (*receiver1)(void)*/)
+         uint16_t datalen)
 {
-		
-	//uip_ipaddr_t addr_test;			
+	//Endereço para broadcast de confirmação	
+	//uip_ipaddr_t addr_receiver;			
 	
-	//CONSULTA
+	//Mensagem recebida 
 	printf("Dados recebidos do end.: ");
   	uip_debug_ipaddr_print(sender_addr);
 	//PRINT6ADDR(&sender_addr);
 	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
         receiver_port, sender_port, datalen, data);
-	//printf("%c\n", data[datalen-1]);
-	int type_reply = (int) data[datalen-1] - 48;
+	
+	//Transforma o último caracter da mensagem em inteiro
+	int type = (int) data[datalen-1] - 48;
+	
+	//Vetor que armazena os níveis de classificação	/ prioridade
 	int j = 0;
-	//printf("contador: %d\n", count);
-	vt[count] = type_reply;
+	vt[count] = type;
 	for (j = 0; j<10; j++){
 		printf("%d ", vt[j]);
 	}	
 	printf("\n");	
 	count++;
 	printf("contador: %d\n", count);
+
 	//Espaço dedicado a confirmação de que recebeu o broadcast
-	//if (((data[datalen-1] == '1') || (data[datalen-1] == '2')) /*&& is_event == 1*/){	
-	//	printf("reply\n");		
-		//uip_create_linklocal_allnodes_mcast(&addr_test);
-		//simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_test);
-	//}
+	/*if (((type == 1) || (type == 2))){	
+		printf("reply\n");		
+		uip_create_linklocal_allnodes_mcast(&addr_receiver);
+		simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_receiver);
+	}*/
 	
 
 }
@@ -291,39 +294,40 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 
 //###############################################################################
 PROCESS_THREAD(test_timer_process, ev, data){
+	//Mensagem a ser enviada pelo broadcast
 	char msg[100];
 
 	PROCESS_BEGIN();
-	printf("process begin %d\n", count);
 	static struct etimer et;
   	uip_ipaddr_t addr;
 
+	//Registrar broadcast
 	simple_udp_register(&broadcast_connection, UDP_PORT,
                       NULL, UDP_PORT,
                       receiver); 
 
-    //Armazena o id do próprio mote  
-    int my_id;
+    	//Armazena o id do próprio mote  
+    	int my_id;
 
-    //Vetor para as coordenadas X,Y e Z do próprio mote
-    unsigned int my_coordinate[3];
+    	//Vetor para as coordenadas X,Y e Z do próprio mote
+    	unsigned int my_coordinate[3];
 
-    //Vetor para as coordenadas dos eventos
-    unsigned int event[3];
+    	//Vetor para as coordenadas dos eventos
+    	unsigned int event[3];
 
-    //Vetor para armazenar a diferença na subtração entre as coordenadas
-    unsigned int diff[3];
+    	//Vetor para armazenar a diferença na subtração entre as coordenadas
+    	unsigned int diff[3];
 
-    //Prioridade
-    unsigned int priority;
+    	//Níveis de classificação / prioridade
+    	unsigned int priority;
 
 	while(1) {
 	    etimer_set(&et, CLOCK_SECOND*SECONDS);
 	    PROCESS_WAIT_EVENT();
-		printf("process wait event %d\n", count);
-		//count = 0; 		
+			
         //Mote busca o seu próprio id e subtrai 2 de seu valor   
         my_id=node_id-2;
+
         /*Mote busca sua própria coordenada X,Y e Z dentro da matriz de coordenadas
         no arquivo coordinate.h e armazena elas no vetor*/
         my_coordinate[0]=(unsigned int)(motes_coordinates[my_id][0]*100);
@@ -367,27 +371,28 @@ PROCESS_THREAD(test_timer_process, ev, data){
       
             //Estabelecendo prioridade para cada evento
             priority = priority_events[event_count];
-            //printf("Teste: %d\n", priority);
 
-            //Se a distancia calculada for menor igual ao range, o mote exibe aviso
-            if((distance/100)<=RANGE){
-    	        is_event=1;	
-    	        printf("if distance %d\n", count);
+            //Se a distancia calculada for menor igual ao range, o mote vai enviar broadcast
+            if((distance/100)<=RANGE){	
     	        printf("Detectou evento\n");
     	        printf("Enviando broadcast\n");	
+
+		//Constrói mensagem broadcast
     	        sprintf(msg, "Mote: %d aconteceu com nivel %d", sender_id, priority);
-    	        uip_create_linklocal_allnodes_mcast(&addr); //Set IP address addr to the link local all-nodes multicast address
-        	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); //Send a UDP packet to a specified IP address.
-    	        printf("if dps broadcast %d\n", count);	
+		
+		//Set IP address addr to the link local all-nodes multicast address
+    	        uip_create_linklocal_allnodes_mcast(&addr);
+ 
+		//Send a UDP packet to a specified IP address.
+        	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); 	
     	
     	        //Ativa o flag avisando sobre evento
-            
+		is_event=1;            
     
                 char str[100];
     
                 //Informação sobre o evento detectado
                 snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
-                //printf("String: %s\n",str);
     
                 //Copia a informação do evento para array em res-hello.h
                 memcpy(info_event,str,sizeof(str));
@@ -396,31 +401,25 @@ PROCESS_THREAD(test_timer_process, ev, data){
         } //fim do event_count<total_events
 
         //Acrescenta 1 para o próximo evento
-        //count = 0;
         event_count++;  
-        //count = 0;
 
         //Se o tempo estimado expirar, reinicia a contagem
         if(etimer_expired(&et)) {
-	    //count = 0;
             int k;
-	        count = 0;
-	        for (k = 0; k < 10; k++){
-	    	    vt[k] = 0;
-		        //printf("vet %d ",vt[k]);
-	        }
-	        etimer_reset(&et);
+	    count = 0;
+	    for (k = 0; k < 10; k++){
+	   	vt[k] = 0;
+		//printf("vet %d ",vt[k]);
+	    }
+	    etimer_reset(&et);
         }
-        printf("if dps etimer reset %d\n", count);
+        
+        //Verifica se o vetor está nulo
         int l;
 	for(l = 0; l < 10; l++){
 		printf("vet %d ", vt[l]);
 	}
 	printf("\n");
-        if(count != 0){
-    	    count = 0;
-        }
-
 
 	} //fim do while
 PROCESS_END();
