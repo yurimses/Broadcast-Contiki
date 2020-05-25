@@ -109,6 +109,8 @@ unsigned int event_count=0;
 
 static struct simple_udp_connection broadcast_connection;
 
+static struct ctimer timer;
+
 //Variáveis para vetor que armazena classificação / nível do evento
 static int count = 0;
 
@@ -157,6 +159,7 @@ PROCESS(test_timer_process, "Test timer");
 PROCESS(er_example_server, "Erbium Example Server");
 AUTOSTART_PROCESSES(&er_example_server,&test_timer_process);
 
+//Função receiver do broadcast
 static void
 receiver(struct simple_udp_connection *c,
          const uip_ipaddr_t *sender_addr,
@@ -179,6 +182,7 @@ receiver(struct simple_udp_connection *c,
 	//Transforma o último caracter da mensagem em inteiro
 	int type = (int) data[datalen-1] - 48;
 	
+	
 	//Vetor que armazena os níveis de classificação	/ prioridade
 	int j = 0;
 	vt[count] = type;
@@ -190,8 +194,7 @@ receiver(struct simple_udp_connection *c,
 	printf("contador: %d\n", count);
 
 	//Espaço dedicado a confirmação de que recebeu o broadcast
-	/*if (((type == 1) || (type == 2))){	
-		printf("reply\n");		
+	/*if (((type == 1) || (type == 2))){			
 		uip_create_linklocal_allnodes_mcast(&addr_receiver);
 		simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_receiver);
 	}*/
@@ -201,6 +204,14 @@ receiver(struct simple_udp_connection *c,
 // 1 ocorreu evento crítico (nivel 1)
 // 2 ocorreu evento não crítico (nivel 2)
 
+//Função para limpar o contador e o vetor da função receiver
+static void clean(void *ptr){
+            int k;
+	    count = 0;
+	    for (k = 0; k < 10; k++){
+	   	vt[k] = 0;
+	    }
+}
 
 PROCESS_THREAD(er_example_server, ev, data)
 {
@@ -402,27 +413,21 @@ PROCESS_THREAD(test_timer_process, ev, data){
 
         //Acrescenta 1 para o próximo evento
         event_count++;  
+	
+	
+        
+	//Para a função clean ser chamada a cada 30 segundos	
+	ctimer_set(&timer, CLOCK_SECOND*30, cleanevents, NULL);        
 
-        //Se o tempo estimado expirar, reinicia a contagem
-        if(etimer_expired(&et)) {
-            int k;
-	    count = 0;
-	    for (k = 0; k < 10; k++){
-	   	vt[k] = 0;
-		//printf("vet %d ",vt[k]);
-	    }
+	//Se o tempo estimado expirar, reinicia a contagem
+	if(etimer_expired(&et)) {
 	    etimer_reset(&et);
+	    //ctimer_set(&timer, CLOCK_SECOND*10, cleanevents, NULL);
         }
         
-        //Verifica se o vetor está nulo
-        int l;
-	for(l = 0; l < 10; l++){
-		printf("vet %d ", vt[l]);
-	}
-	printf("\n");
-
 	} //fim do while
 PROCESS_END();
 }
+
 //###############################################################################
 
