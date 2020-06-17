@@ -305,17 +305,22 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
 	static uint16_t addr_test[8];
 	uip_ipaddr_t dest_addr;
+	
 
+	//aaaa::c30c:0:0:1
 	addr_test[0] = 0xaaaa;
-	addr_test[4] = 0x200;
-	addr_test[5] = 0x7401;
-	addr_test[6] = 0x0000;
+	addr_test[4] = 0xc30c;
+	//addr_test[5] = 0x0000;
+	//addr_test[6] = 0x0000;
 	addr_test[7] = 0x0001;
 
 	uip_ip6addr(&dest_addr, addr_test[0], addr_test[1], addr_test[2],
 	addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
 
-	add_observer(&dest_addr, 0, 0, 0, "res-hello", 0);
+	add_observer(&dest_addr, 0, 0, 0, "res-hello", 9);
+	printf("end de teste\n");
+	uip_debug_ipaddr_print(&dest_addr);
+	printf("\n");
 
 
 

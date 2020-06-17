@@ -39,28 +39,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include "rest-engine.h"
+#include "er-coap.h"
 
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
-
+static void res_periodic_handler(void);
 /*
  * A handler function named [resource name]_handler must be implemented for each RESOURCE.
  * A buffer for the response payload is provided through the buffer pointer. Simple resources can ignore
  * preferred_size and offset, but must respect the REST_MAX_CHUNK_SIZE limit for the buffer.
  * If a smaller block size is requested for CoAP, the REST framework automatically splits the data.
  */
-RESOURCE(res_hello,
-         "title=\"Hello world: ?len=0..\";rt=\"Text\"",
+PERIODIC_RESOURCE(res_hello,
+         "title=\"Hello world: ?len=0..\";rt=\"Text\";obs",
          res_get_handler,
          NULL,
          NULL,
-         NULL);
+         NULL,
+         5 * CLOCK_SECOND,
+          res_periodic_handler);
 
 static void
 res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   const char *len = NULL;
   /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
-  char const *const message = "Hello World! ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy";
+  char const *const message = "Hello World!";
   int length = 12; /*           |<-------->| */
 
   /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */
@@ -79,3 +82,17 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
   REST.set_header_etag(response, (uint8_t *)&length, 1);
   REST.set_response_payload(response, buffer, length);
 }
+
+static void
+res_periodic_handler()
+{
+  /* Do a periodic task here, e.g., sampling a sensor. */
+  //++event_counter;
+
+  /* Usually a condition is defined under with subscribers are notified, e.g., large enough delta in sensor reading. */
+  if(1) {
+    /* Notify the registered observers which will trigger the res_get_handler to create the response. */
+    REST.notify_subscribers(&res_hello);
+  }
+}
+
