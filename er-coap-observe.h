@@ -71,7 +71,7 @@ typedef struct coap_observer {
 
 list_t coap_get_observers(void);
 
-//Declarando função coap_observer
+//Declarando função add_observer 
 coap_observer_t *add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token, size_t token_len, 
 const char *uri, int uri_len);
 
