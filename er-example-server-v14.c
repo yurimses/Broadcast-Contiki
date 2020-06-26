@@ -51,8 +51,8 @@
 #include "net/ip/uip-debug.h"
 #include "net/ipv6/uip-ds6.h"
 #include "simple-udp.h"
-
-
+#include "er-coap-observe.h"
+//#include "er-coap-observe-client.h"
 
 //Arquivo com as coordenadas dos motes
 #include "coordinates.h"
@@ -60,7 +60,7 @@
 #include "events.h"
 //Arquivo com flag sobre evento e a informação sobre ele
 #include "resources/res-hello.h"
-//Arquivo com as informações de prioridade de eventos
+//Arquivo com as informações de classificação / nível de eventos
 #include "priority_events.h"
 
 //Ariker> add this line
@@ -109,6 +109,14 @@ unsigned int event_count=0;
 
 static struct simple_udp_connection broadcast_connection;
 
+static struct ctimer timer;
+
+static struct etimer add_obs_timer;
+
+//Variáveis para vetor que armazena classificação / nível do evento
+static int count = 0;
+
+static int vt[10];
 //#############################################################################
 
 
@@ -153,6 +161,7 @@ PROCESS(test_timer_process, "Test timer");
 PROCESS(er_example_server, "Erbium Example Server");
 AUTOSTART_PROCESSES(&er_example_server,&test_timer_process);
 
+//Função receiver do broadcast
 static void
 receiver(struct simple_udp_connection *c,
          const uip_ipaddr_t *sender_addr,
@@ -163,7 +172,7 @@ receiver(struct simple_udp_connection *c,
          uint16_t datalen)
 {
 	//Endereço para broadcast de confirmação	
-	uip_ipaddr_t addr_receiver;			
+	//uip_ipaddr_t addr_receiver;			
 	
 	//Mensagem recebida 
 	printf("Dados recebidos do end.: ");
@@ -173,19 +182,66 @@ receiver(struct simple_udp_connection *c,
         receiver_port, sender_port, datalen, data);
 	
 	//Transforma o último caracter da mensagem em inteiro
-	int type = (int) data[datalen-1] - 48;
+	//int type = (int) data[datalen-1] - 48;
 	
+	
+	//Vetor que armazena ocorrência de evento, limitando o tamanho em 10
+	vt[0] = 1;
+	if (count < 10){
+		int j = 0;
+		vt[count+1] = 1;
+		for (j = 0; j<10; j++){
+			printf("%d ", vt[j]);
+		}	
+		printf("\n");	
+		count++;
+	}
+	printf("contador de respostas vizinhas: %d\n", count);
+
 	//Espaço dedicado a confirmação de que recebeu o broadcast
-	if (((type == 1) || (type == 2))){			
+	/*if (((type == 1) || (type == 2))){			
 		uip_create_linklocal_allnodes_mcast(&addr_receiver);
 		simple_udp_sendto(&broadcast_connection, "oi", 3 , &addr_receiver);
-	}
+	}*/
 	
 
 }
 // 1 ocorreu evento crítico (nivel 1)
 // 2 ocorreu evento não crítico (nivel 2)
 
+//Função para limpar o contador e o vetor da função receiver
+static void clean(void *ptr){
+            int k;
+	    //K-out-of-N
+	    //Soma para verificar a ocorrência de evento
+	    int sum = 0;
+	    if (count_motes < 10){ 
+		    for (k = 0; k < count_motes; k++){
+			sum += vt[k];
+			printf("%d ", vt[k]);
+		    }
+	    }
+	    if (count_motes == 10){
+	    		for (k = 0; k < 10; k++){
+				sum += vt[k];
+				printf("%d ", vt[k]);			
+			}	
+	    }
+	    
+            printf("\nSoma: %d\n", sum);
+	    
+            if (sum >= 1){
+		printf("Verdadeiro Positivo (TP)\n");
+	    }else{
+		printf("Falso Positivo (FP)\n");
+	    }
+            
+	    count = 0;
+	    for (k = 0; k < 10; k++){
+	   	vt[k] = 0;
+	    }
+}
+	
 
 PROCESS_THREAD(er_example_server, ev, data)
 {
@@ -227,7 +283,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
    * WARNING: Activating twice only means alternate path, not two instances!
    * All static variables are the same for each URI path.
    */
-  rest_activate_resource(&res_hello, "test/hello");
+  rest_activate_resource(&res_hello, "res-hello");
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
 /*  rest_activate_resource(&res_separate, "test/separate"); */
@@ -243,20 +299,37 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
   rest_activate_resource(&res_light, "sensors/light"); 
   SENSORS_ACTIVATE(light_sensor);  
 #endif
-/*
-#if PLATFORM_HAS_BATTERY
-  rest_activate_resource(&res_battery, "sensors/battery");  
-  SENSORS_ACTIVATE(battery_sensor);  
-#endif
-#if PLATFORM_HAS_RADIO
-  rest_activate_resource(&res_radio, "sensors/radio");  
-  SENSORS_ACTIVATE(radio_sensor);  
-#endif
-#if PLATFORM_HAS_SHT11
-  rest_activate_resource(&res_sht11, "sensors/sht11");  
-  SENSORS_ACTIVATE(sht11_sensor);  
-#endif
-*/
+
+//cod pra add observador
+	etimer_set(&add_obs_timer, CLOCK_SECOND*50); 
+	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
+	static uint16_t addr_test[8];
+	uip_ipaddr_t dest_addr;
+	
+
+	//aaaa::c30c:0:0:1
+	addr_test[0] = 0xaaaa;
+	addr_test[4] = 0x0000;
+	addr_test[5] = 0x0000;
+	addr_test[6] = 0x0000;
+	addr_test[7] = 0x0001;
+	//addr_test[8] = 0x0002;
+
+	uip_ip6addr(&dest_addr, addr_test[0], addr_test[1], addr_test[2],
+	addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
+
+	add_observer(&dest_addr, 0, 0, 0, "res-hello", 9);
+	/*coap_obs_add_observee(uip_ipaddr_t *addr, uint16_t port,
+            const uint8_t *token, size_t token_len, const char *url,
+            notification_callback_t notification_callback,
+            void *data)*/	
+	//coap_obs_add_observee(&dest_addr, 0, 0, 0, "res-hello", 0, 0)
+	printf("end de teste\n");
+	uip_debug_ipaddr_print(&dest_addr);
+	printf("\n");
+
+
+
 
   /* Define application-specific events here. */
   while(1) {
@@ -283,6 +356,7 @@ PROCESS_THREAD(test_timer_process, ev, data){
 	char msg[100];
 
 	PROCESS_BEGIN();
+	//rest_activate_resource(&res_hello, "res-hello");
 	static struct etimer et;
   	uip_ipaddr_t addr;
 
@@ -387,9 +461,19 @@ PROCESS_THREAD(test_timer_process, ev, data){
 
         //Acrescenta 1 para o próximo evento
         event_count++;  
-	
+        
+	//Para a função clean ser chamada a cada 30 segundos	
+	ctimer_set(&timer, CLOCK_SECOND*30, clean, NULL);        
+
+	//Se o tempo estimado expirar, reinicia a contagem
+	if(etimer_expired(&et)) {
+	    etimer_reset(&et);
+	    //ctimer_set(&timer, CLOCK_SECOND*10, cleanevents, NULL);
+        }
+        
 	} //fim do while
 PROCESS_END();
 }
+
 //###############################################################################
 

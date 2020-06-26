@@ -134,6 +134,26 @@ public class ListEvents{
     return endZ;
   }
 
+  public void save_positions_in_CSV(){
+
+		int endIP = 2; 
+
+		try{
+			//Cria o arquivo em /tmp/motes_coordinates.csv
+			System.setOut(new PrintStream(new FileOutputStream("/tmp/motes_coordinates.csv",false)));
+
+			//Títulos da tabela
+			System.out.println("IP,coordX,coordY");
+
+			//Busca as coordenadas dos motes para salvar no arquivo
+			for(int i=0;i<get_count_motes();i++){
+				System.out.println("[aaaa::200:0:0:"+Integer.toHexString(endIP)+"],"+get_coordX(i)+","+get_coordY(i));
+				endIP++;	  
+			}
+
+		}catch(FileNotFoundException ex){System.out.println("Erro ao criar arquivo!");};
+   }
+
     //Salva as coordenadas dos motes em arquivo
   public void save_coordinate(){
 
