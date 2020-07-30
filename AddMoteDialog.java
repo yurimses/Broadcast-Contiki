@@ -491,6 +491,9 @@ public class AddMoteDialog extends JDialog {
                  //Cria obj da classe ListEvents
                ListEvents obj = new ListEvents();
 
+				//Cria obj da classe PriorityEvents()
+			   PriorityEvents priEven = new PriorityEvents();
+
                 //Captura os limites inferiores e superiores de X,Y e Z do cooja
               String BEGIN_X = (startX.getValue()).toString();
               String  END_X = (endX.getValue()).toString();
@@ -573,11 +576,15 @@ public class AddMoteDialog extends JDialog {
                //Chama a função que salva as coordenadas em arquivo
              obj.save_coordinate();
 
-	      //Chama a função que salva as prioridades dos eventos em arquivo
-	     obj.save_priority();
+               //Salva as posições em arquivo CSV
+             obj.save_positions_in_CSV();
 
-	      //Chama a função que salva eventos para o realsim
-	     obj.save_realsim_events();
+	     //Chama a função que salva as prioridades dos eventos em arquivo
+	     priEven.save_priority(obj);
+
+	     //Chama a função que salva eventos para o realsim
+	     priEven.save_realsim_events(obj);
+
 //#############################################################################
 
 
