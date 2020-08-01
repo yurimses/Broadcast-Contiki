@@ -196,8 +196,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 		load_coordinate_event(event_count);
 		show_coordinate_event();
 		calculate_difference();
-		euclidian_distance();
-		print_distance(euclidian_distance);
+		print_distance(distance);
 	
 
       /*int i;

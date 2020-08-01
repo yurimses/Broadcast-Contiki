@@ -12,21 +12,21 @@
 void calculate_difference(void){
 	for(i=0;i<3;i++){
 		if(event[i]>my_coordinate[i]){
-        		difference[i]= event[i]-my_coordinate[i];  
+        		diff[i]= event[i]-my_coordinate[i];  
         	}else{
-        		difference[i]=my_coordinate[i]-event[i];
+        		diff[i]=my_coordinate[i]-event[i];
         	}
 	}	
 }
 
 int euclidian_distance(){
 	int distance = 0;
-	distance = (int)((sqrt(pow(difference[0],2)+pow(difference[1],2)+pow(difference[2],2))));
+	distance = (int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 	return distance/100;	
 }
 
-void print_distance(int euclidian_distance){
-	printf("Distancia euclidiana %d", euclidian_distance());
+void print_distance(int distance){
+	printf("Distancia euclidiana %d", distance);
 }
 
 
