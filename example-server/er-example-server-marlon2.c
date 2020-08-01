@@ -45,11 +45,12 @@
 #include "sys/node-id.h"
 #include <math.h>
 //Arquivo com flag sobre evento e a informação sobre ele
-#include "resources/res-hello.h"
+//#include "resources/res-hello.h"
 //Arquivo com range de detecção dos eventos
 //#include "resources/res-range-events.h"
 //Arquivo com os arrays de coordenadas
 #include "load-coordinate.h"
+#include "calculate-distance.h"
 //Ariker> add this line
 //#include "../apps/powertrace/powertrace.h"
 #include "powertrace.h"
@@ -194,8 +195,10 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 		show_coordinate_mote();
 		load_coordinate_event(event_count);
 		show_coordinate_event();
+		calculate_difference();
+		euclidian_distance(*difference);
 
-      int i;
+      /*int i;
 
         //TODO Criar função que calcula a diferença entre coordenadas X,Y e Z do mote e do evento
       for(i=0;i<3;i++){
@@ -210,25 +213,25 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
       unsigned distance = (unsigned int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 
 		//TODO Criar função que exibe a distância
-      printf("Distancia: %u\n",distance);
+      printf("Distancia: %u\n",distance);*/
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
-      if((distance/100)<=range){//TODO Usar distance/100 no cálculo euclidiano e retorna resultado
+      if((euclidian_distance(*difference)/100)<=range){//TODO Usar distance/100 no cálculo euclidiano e retorna resultado
 
           //Ativa o flag avisando sobre evento
-        is_event=1;
+        //s_event=1;
 
 		 //TODO Criar função que exibe a ocorrência de evento
         printf("DETECTADO EVENTO\n");
 
 		 //TODO Criar função que armazena mensagem que será envida para o cliente e retorna str
-        char str[100];
+        //char str[100];
           //Informação sobre o evento detectado
-        snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
-        printf("String: %s\n",str);
+        //snprintf(str,100,"\nMote %d:Evento a %um de distancia\n",node_id, distance/100);
+        //printf("String: %s\n",str);
 
           //Copia a informação do evento para array em res-hello.h
-        memcpy(info_event,str,sizeof(str));
+        //memcpy(info_event,str,sizeof(str));
       }    
 
       //Acrescenta 1 para o próximo evento

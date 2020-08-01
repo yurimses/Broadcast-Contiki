@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <calc-distance.h>
+#include "calculate-distance.h"
+#include "load-coordinate.h"
 //Arquivo com as coordenadas dos motes
 #include "coordinates.h"
 //Arquivo com as coordenadas dos eventos
