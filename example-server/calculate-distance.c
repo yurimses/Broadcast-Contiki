@@ -19,14 +19,14 @@ void calculate_difference(void){
 	}	
 }
 
-int euclidian_distance(){
+int euclidian_distance(void){
 	int distance = 0;
 	distance = (int)((sqrt(pow(diff[0],2)+pow(diff[1],2)+pow(diff[2],2))));
 	return distance/100;	
 }
 
 void print_distance(int distance){
-	printf("Distancia euclidiana %d", distance);
+	printf("Distancia euclidiana %d\n", distance);
 }
 
 
