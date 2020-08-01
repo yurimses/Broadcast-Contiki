@@ -5,9 +5,9 @@
 #include "calculate-distance.h"
 #include "load-coordinate.h"
 //Arquivo com as coordenadas dos motes
-#include "coordinates.h"
+//#include "coordinates.h"
 //Arquivo com as coordenadas dos eventos
-#include "events.h"
+//#include "events.h"
 
 void calculate_difference(void){
 	for(i=0;i<3;i++){
@@ -19,10 +19,14 @@ void calculate_difference(void){
 	}	
 }
 
-int euclidian_distance(int *difference){
+int euclidian_distance(){
 	int distance = 0;
 	distance = (int)((sqrt(pow(difference[0],2)+pow(difference[1],2)+pow(difference[2],2))));
-	return distance;	
+	return distance/100;	
+}
+
+void print_distance(int euclidian_distance){
+	printf("Distancia euclidiana %d", euclidian_distance());
 }
 
 

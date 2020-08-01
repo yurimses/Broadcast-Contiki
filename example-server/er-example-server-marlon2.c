@@ -150,7 +150,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
    * WARNING: Activating twice only means alternate path, not two instances!
    * All static variables are the same for each URI path.
    */
-  rest_activate_resource(&res_range_events,"res_range_events");
+  //rest_activate_resource(&res_range_events,"res_range_events");
   rest_activate_resource(&res_hello, "test/hello");
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
@@ -182,7 +182,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 #endif
 */
 	  //Área de detecção de eventos cada mote
-	range=10;
+	int range=10;
 
 	static struct etimer et;
 
@@ -196,7 +196,9 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
 		load_coordinate_event(event_count);
 		show_coordinate_event();
 		calculate_difference();
-		euclidian_distance(*difference);
+		euclidian_distance();
+		print_distance(euclidian_distance);
+	
 
       /*int i;
 
@@ -216,7 +218,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
       printf("Distancia: %u\n",distance);*/
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
-      if((euclidian_distance(*difference)/100)<=range){//TODO Usar distance/100 no cálculo euclidiano e retorna resultado
+      if(euclidian_distance()<=range){
 
           //Ativa o flag avisando sobre evento
         //s_event=1;
