@@ -218,7 +218,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
       printf("Distancia: %u\n",distance);*/
 
         //Se a distancia calculada for menor igual ao range, o mote exibe aviso
-      if(euclidian_distance()<=range){
+      if(distance<=range){
 
           //Ativa o flag avisando sobre evento
         //is_event=1;
