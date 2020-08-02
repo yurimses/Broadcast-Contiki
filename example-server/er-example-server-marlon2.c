@@ -221,7 +221,7 @@ powertrace_start(CLOCK_SECOND * seconds, seconds, fixed_perc_energy, variation);
       if(euclidian_distance()<=range){
 
           //Ativa o flag avisando sobre evento
-        //s_event=1;
+        //is_event=1;
 
 		 //TODO Criar função que exibe a ocorrência de evento
         printf("DETECTADO EVENTO\n");
