@@ -24,3 +24,6 @@ void load_coordinate_event(int event_count);
 
  //Exibe a coordenada do evento
 void show_coordinate_event(void);
+
+ //Retorna count_motes
+int return_count_motes(void);

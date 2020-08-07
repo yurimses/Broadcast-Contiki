@@ -52,7 +52,11 @@ void show_coordinate_event(void){
 		printf("Coordenada Z do evento: %u\n",event[2]);
 }
 
-
+int return_count_motes(void){
+	int ctmotes = 0;
+	ctmotes = count_motes;
+	return ctmotes;
+}
 
 
 
