@@ -45,6 +45,7 @@
 #include "coordinates.h"
 #include "events.h"
 #include "priority_events.h"
+#include "testando.h"
 //##########################################################
 
 
@@ -94,26 +95,33 @@ static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr[1];
 static uint8_t instance_ids[1];
 
-//yuri
 
+//YURI
 //##########################################################
+//Contagem de eventos
 unsigned int event_count=0; 
 
+//Estabelecer struct broadcast para registro
 static struct simple_udp_connection broadcast_connection;
 
+//Para função clean
 static struct ctimer timer;
 
-static struct etimer add_obs_timer;
+//Para OBS
+//static struct etimer add_obs_timer;
 
 //Variáveis para vetor que armazena classificação / nível do evento
 static int count = 0;
 
+//Vetor para função clean
 static int vt[10];
 
+//Flag para resposta da função clean
+static int is_event_cln = 0;
 //##########################################################
 
 
-//yuri
+//YURI
 //##########################################################
 //Função receiver do broadcast
 static void
@@ -125,12 +133,13 @@ receiver(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
+	//Mensagem recebida
 	printf("Dados recebidos do end.: ");
   	uip_debug_ipaddr_print(sender_addr);
 	printf(" na porta %d oriundos da porta %d com tam.: %d: '%s'\n",
         receiver_port, sender_port, datalen, data);
 	
-	vt[0] = 1;
+	//Vetor que armazena ocorrência de evento, limitando o tamanho em 10
 	if (count < 10){
 		int j = 0;
 		vt[count+1] = 1;
@@ -169,8 +178,10 @@ static void clean(void *ptr){
 	    
             if (sum >= 1){
 		printf("Verdadeiro Positivo (TP)\n");
+		is_event_cln = 1;
 	    }else{
 		printf("Falso Positivo (FP)\n");
+		is_event_cln = 0;
 	    }
             
 	    count = 0;
@@ -249,9 +260,14 @@ PROCESS_THREAD(custom_process, ev, data)
 
   PROCESS_BEGIN();
 
-//yuri
+//YURI
 //##########################################################
-  static struct etimer et;
+   is_event_cln = 0;  
+
+
+   static struct etimer et;
+
+  //Endereço a ser usado pelo broadcast
   uip_ipaddr_t addr;
 
   //Registrar broadcast
@@ -311,11 +327,15 @@ PROCESS_THREAD(custom_process, ev, data)
   //etimer_set(&et, CLOCK_SECOND*SECONDS);
   while(1) {
     PROCESS_YIELD();
-//yuri
+//YURI
+
 //##########################################################
 etimer_set(&et, CLOCK_SECOND*SECONDS);
 	    PROCESS_WAIT_EVENT();
-			
+	change_instance_status(1,instance_ids[0]);
+	change_instance_status(1,20);	
+		
+
         //Mote busca o seu próprio id e subtrai 2 de seu valor   
         my_id=node_id-2;
 
@@ -326,9 +346,11 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
         my_coordinate[2]=(unsigned int)(motes_coordinates[my_id][2]*100);
 
         //O mote exibe os valores X,Y e Z de sua coordenada
-        //printf("Coordenada X: %u\n",my_coordinate[0]);
-        //printf("Coordenada Y: %u\n",my_coordinate[1]);
-        //printf("Coordenada Z: %u\n",my_coordinate[2]);
+        printf("Coordenada X: %u\n",my_coordinate[0]);
+        printf("Coordenada Y: %u\n",my_coordinate[1]);
+        printf("Coordenada Z: %u\n",my_coordinate[2]);
+
+	printf("vetor teste: 0/1 %d\n", vetor_teste[0][1]);
 
         //Se valor do contador de eventos for menor que total de eventos
         if(event_count<total_events){
@@ -339,9 +361,9 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
             event[2]=(unsigned int)(events_coordinates[event_count][2]*100);
 
             //Mote exibe os valores X,Y e Z do evento
-            //printf("Coordenada X do evento: %u\n",event[0]);
-            //printf("Coordenada Y do evento: %u\n",event[1]);
-            //printf("Coordenada Z do evento: %u\n",event[2]);
+            printf("Coordenada X do evento: %u\n",event[0]);
+            printf("Coordenada Y do evento: %u\n",event[1]);
+            printf("Coordenada Z do evento: %u\n",event[2]);
 
             int i;
             int sender_id = node_id;
@@ -368,6 +390,10 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
     	        printf("Detectou evento\n");
     	        printf("Enviando broadcast\n");	
 
+		//Nó informa que detectou evento ao vetor indice [0]
+		//indice [0] dedicado exclusivamente ao próprio nó
+		vt[0] = 1;
+
 		//Constrói mensagem broadcast
     	        sprintf(msg, "Mote: %d aconteceu com nivel %d", sender_id, priority);
 		
@@ -375,9 +401,18 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
     	        uip_create_linklocal_allnodes_mcast(&addr);
  
 		//Send a UDP packet to a specified IP address.
-        	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr); 	
+        	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr);
+		/*
+		if (priority == 2){
+			change_instance_status(2, instance_ids[0]);
+		}else{
+			change_instance_status(2, instance_ids[0]);
+			change_instance_status(2, 20);
+		}
+		*/	
+	 	
     	
-            }
+            } //fim do if distance
 
         } //fim do event_count<total_events
 
@@ -385,12 +420,23 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
         event_count++;  
         
 	//Para a função clean ser chamada a cada 30 segundos	
-	ctimer_set(&timer, CLOCK_SECOND*30, clean, NULL);        
+	ctimer_set(&timer, CLOCK_SECOND*30, clean, NULL);
 
+	printf("is_event_cln: %d\n", is_event_cln);
+	printf("prioridade: %d\n", priority);
+	if (is_event_cln == 1){
+		if (priority == 2){
+			change_instance_status(2, instance_ids[0]);
+		}else{
+			change_instance_status(2, instance_ids[0]);
+			change_instance_status(2, 20);
+		}
+	}   
+
+ 
 	//Se o tempo estimado expirar, reinicia a contagem
 	if(etimer_expired(&et)) {
 	    etimer_reset(&et);
-	    //ctimer_set(&timer, CLOCK_SECOND*10, cleanevents, NULL);
         }
 //##########################################################
 
@@ -402,8 +448,8 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
     minute = ((clock_time() / CLOCK_SECOND) / 60);
     mod = minute % 60;
 
-    printf("TEMPO Hora: %d Minuto: %d \n", hour, minute);
-
+    //printf("TEMPO Hora: %d Minuto: %d \n", hour, minute);
+/*
     //Schedule 1
     if(timeline[hour] == schedule1)
     {
@@ -526,13 +572,15 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
 
     }
 
+*/
     if(etimer_expired(&periodic_send))
     {
-      status = get_instance_status(instance_ids[0]);
+      int status10 = get_instance_status(instance_ids[0]);
+      int status20 = get_instance_status(20);
 
-      if(status == 1)
+      if(status10 == 2 || status20 == 2)
       {
-        //printf("Enviando mensagem\n");
+        printf("Enviando mensagem\n");
         ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
       }
       etimer_reset(&periodic_send);
