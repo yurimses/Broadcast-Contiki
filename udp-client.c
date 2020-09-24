@@ -20,8 +20,8 @@
 #include "sys/battery_kinetic.h"
 
 /*Instances*/
-#include "sys/periodic20.h"
-#include "sys/periodic30.h"
+//#include "sys/periodic20.h"
+//#include "sys/periodic30.h"
 //#include "sys/periodic40.h"
 //#include "sys/periodic50.h"
 
@@ -32,7 +32,7 @@
 //#define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
-//yuri
+//YURI
 //##########################################################
 //#include "rest-engine.h"
 #include <math.h>
@@ -45,7 +45,7 @@
 #include "coordinates.h"
 #include "events.h"
 #include "priority_events.h"
-#include "testando.h"
+
 //##########################################################
 
 
@@ -74,7 +74,7 @@
 #define MAX_PAYLOAD_LEN		40
 #define STOP_TIME		(300 * CLOCK_SECOND)
 
-//yuri
+//YURI
 //###############################################################################
   //Tempo de cada evento
 #define SECONDS 60
@@ -85,16 +85,16 @@
 #define UDP_PORT 1234
 
 #define SEND_INTERVAL		(20 * CLOCK_SECOND)
-#define SEND_TIME		(random_rand() % (SEND_INTERVAL))
+//#define SEND_TIME		(random_rand() % (SEND_INTERVAL))
+
+#define INSTANCES_NUMBER 2
 
 //###############################################################################
-
 
 static struct uip_udp_conn *client_conn;
 /* server addresses definition */
 static uip_ipaddr_t server_ipaddr[1];
-static uint8_t instance_ids[1];
-
+static uint8_t instance_ids[2];
 
 //YURI
 //##########################################################
@@ -118,6 +118,12 @@ static int vt[10];
 
 //Flag para resposta da função clean
 static int is_event_cln = 0;
+
+//Prioridade / classificação dos eventos
+unsigned int priority;
+
+static int status10 = 0;
+static int status20 = 0;
 //##########################################################
 
 
@@ -188,6 +194,26 @@ static void clean(void *ptr){
 	    for (k = 0; k < 10; k++){
 	   	vt[k] = 0;
 	    }
+
+	    
+	    printf("is_event_cln: %d\n", is_event_cln);
+	    printf("prioridade: %d\n", priority);
+	    if (is_event_cln == 1){
+		if (priority == 2){
+			printf("alterou instancia 1\n");
+			change_instance_status(2, instance_ids[0]);
+		}else{
+			printf("alterou instancia 1 e 2\n");
+			change_instance_status(2, instance_ids[0]);
+			change_instance_status(2, instance_ids[1]);
+		}
+	    }   
+
+	    status10 = get_instance_status(instance_ids[0]);
+            status20 = get_instance_status(instance_ids[1]);
+
+            printf("status10: %d | status20: %d\n", status10, status20);
+
 }
 
 //##########################################################
@@ -225,7 +251,10 @@ static void send_packet()
 {
   char buf[MAX_PAYLOAD_LEN];
   seq_id++;
+  int count_sp = 0;
 
+
+/*
   printf("DATA send to %d ", server_ipaddr[(seq_id-1)%NB_SERVERS]);
   printf("'Hello %d' (via Instance %d) \n", seq_id, instance_ids[(seq_id-1)%NB_INSTANCES]);
   sprintf(buf, "Hello %d from the client (via Instance %d)", seq_id, instance_ids[(seq_id-1)%NB_INSTANCES]);
@@ -233,18 +262,47 @@ static void send_packet()
   client_conn->rpl_instance_id=instance_ids[(seq_id-1)%NB_INSTANCES];
 
   uip_udp_packet_sendto(client_conn, &buf, strlen(buf), &server_ipaddr[(seq_id-1)%NB_SERVERS], UIP_HTONS(UDP_SERVER_PORT));
+*/
+printf("sp status10: %d/%d| status20: %d/%d\n", status10, get_instance_status(instance_ids[0]), status20, get_instance_status(instance_ids[1]));
+/*for (count_sp; count_sp < INSTANCES_NUMBER; count_sp++){
+	printf("DATA send to %d ", server_ipaddr[0]);
+	printf("'Hello %d' (via Instance %d) \n", seq_id, instance_ids[count_sp]);
+	sprintf(buf, "Hello %d from the client (via Instance %d)", seq_id, instance_ids[count_sp]);
+	client_conn->rpl_instance_id=instance_ids[count_sp];
+	uip_udp_packet_sendto(client_conn, &buf, strlen(buf), &server_ipaddr[0], UIP_HTONS(UDP_SERVER_PORT));	
+		   
+  }
+*/
+if (status20 == 2){
+	for (count_sp; count_sp < INSTANCES_NUMBER; count_sp++){
+		printf("DATA send to %d ", server_ipaddr[0]);
+		printf("'Hello %d' (via Instance %d) \n", seq_id, instance_ids[count_sp]);
+		sprintf(buf, "Hello %d from the client (via Instance %d)", seq_id, instance_ids[count_sp]);
+		client_conn->rpl_instance_id=instance_ids[count_sp];
+		uip_udp_packet_sendto(client_conn, &buf, strlen(buf), &server_ipaddr[0], UIP_HTONS(UDP_SERVER_PORT));	
+			   
+	}
+}else{
+	printf("DATA send to %d ", server_ipaddr[0]);
+	printf("'Hello %d' (via Instance %d) \n", seq_id, instance_ids[count_sp]);
+	sprintf(buf, "Hello %d from the client (via Instance %d)", seq_id, instance_ids[count_sp]);
+	client_conn->rpl_instance_id=instance_ids[count_sp];
+	uip_udp_packet_sendto(client_conn, &buf, strlen(buf), &server_ipaddr[0], UIP_HTONS(UDP_SERVER_PORT));
 }
+}
+
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(custom_process, ev, data)
 {
 
-//yuri
+//YURI
 //##########################################################
 //Mensagem a ser enviada pelo broadcast
   char msg[100];
 //##########################################################
 
-  static struct etimer periodic_send;
+  //static struct etimer periodic_send;
   static struct ctimer backoff_timer;
   int status, hour, minute, mod;
 
@@ -255,16 +313,14 @@ PROCESS_THREAD(custom_process, ev, data)
   int state_client = 4;
   double batt_perc = 1;//0.3;
 
-  unsigned event3 = 60*3;
-  unsigned event5 = 60*5;
+  //unsigned event3 = 60*3;
+  //unsigned event5 = 60*5;
 
   PROCESS_BEGIN();
 
 //YURI
 //##########################################################
-   is_event_cln = 0;  
-
-
+    
    static struct etimer et;
 
   //Endereço a ser usado pelo broadcast
@@ -287,11 +343,12 @@ PROCESS_THREAD(custom_process, ev, data)
   unsigned int diff[3];
 
   //Níveis de classificação / prioridade
-  unsigned int priority;
+  //unsigned int priority;
+
 //##########################################################
 
-  instance_20(CLOCK_SECOND * event5);
-  instance_30(CLOCK_SECOND * event3);
+  //instance_20(CLOCK_SECOND * event5);
+  //instance_30(CLOCK_SECOND * event3);
 
   //Ariker> add this line
 
@@ -318,22 +375,22 @@ PROCESS_THREAD(custom_process, ev, data)
   /*Start Pool*/
   start_pool();
 
-
 /* server addresses initialization */
   uip_ip6addr(&server_ipaddr[0], 0xfd00,0,0,0,0,0,0,1);
   instance_ids[0]=10;
+  instance_ids[1]=20;
 
-  etimer_set(&periodic_send, SEND_INTERVAL);
-  //etimer_set(&et, CLOCK_SECOND*SECONDS);
+  //etimer_set(&periodic_send, SEND_INTERVAL);
+  //etimer_set(&et, CLOCK_SECOND*40);
   while(1) {
-    PROCESS_YIELD();
-//YURI
+    //PROCESS_YIELD();
 
+//YURI
 //##########################################################
 etimer_set(&et, CLOCK_SECOND*SECONDS);
 	    PROCESS_WAIT_EVENT();
-	change_instance_status(1,instance_ids[0]);
-	change_instance_status(1,20);	
+	change_instance_status(1, instance_ids[0]);
+	change_instance_status(1, instance_ids[1]);	
 		
 
         //Mote busca o seu próprio id e subtrai 2 de seu valor   
@@ -349,8 +406,6 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
         printf("Coordenada X: %u\n",my_coordinate[0]);
         printf("Coordenada Y: %u\n",my_coordinate[1]);
         printf("Coordenada Z: %u\n",my_coordinate[2]);
-
-	printf("vetor teste: 0/1 %d\n", vetor_teste[0][1]);
 
         //Se valor do contador de eventos for menor que total de eventos
         if(event_count<total_events){
@@ -402,16 +457,7 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
  
 		//Send a UDP packet to a specified IP address.
         	simple_udp_sendto(&broadcast_connection, msg, strlen(msg), &addr);
-		/*
-		if (priority == 2){
-			change_instance_status(2, instance_ids[0]);
-		}else{
-			change_instance_status(2, instance_ids[0]);
-			change_instance_status(2, 20);
-		}
-		*/	
-	 	
-    	
+	
             } //fim do if distance
 
         } //fim do event_count<total_events
@@ -420,33 +466,44 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
         event_count++;  
         
 	//Para a função clean ser chamada a cada 30 segundos	
-	ctimer_set(&timer, CLOCK_SECOND*30, clean, NULL);
-
-	printf("is_event_cln: %d\n", is_event_cln);
-	printf("prioridade: %d\n", priority);
-	if (is_event_cln == 1){
-		if (priority == 2){
-			change_instance_status(2, instance_ids[0]);
-		}else{
-			change_instance_status(2, instance_ids[0]);
-			change_instance_status(2, 20);
-		}
-	}   
-
+	ctimer_set(&timer, CLOCK_SECOND*10, clean, NULL);
  
+        /*if(status10 == 2 || status20 == 2)
+      	{
+        	printf("Enviando mensagem \n");
+        	ctimer_set(&backoff_timer, CLOCK_SECOND*40, send_packet, NULL);
+      	}*/
+
 	//Se o tempo estimado expirar, reinicia a contagem
-	if(etimer_expired(&et)) {
+	//if(etimer_expired(&et)) {
+
+	//int status10 = get_instance_status(instance_ids[0]);
+        //int status20 = get_instance_status(instance_ids[1]);
+        //printf("status10: %d | status20: %d\n", status10, status20);
+
+	printf("print antes do if\n");
+      	if(status10 == 2 || status20 == 2) 
+      	{
+        	printf("Enviando mensagem\n");
+		printf("etimer status10: %d | status20: %d\n", status10, status20);        	
+		ctimer_set(&backoff_timer, CLOCK_SECOND*15, send_packet, NULL);
+		//send_packet();
+		//else
+		//send_packet(2);
+      	}
+	    
 	    etimer_reset(&et);
-        }
+   //}
+
 //##########################################################
 
-    if(ev == tcpip_event) {
-      tcpip_handler();
-    }
+    //if(ev == tcpip_event) {
+      //tcpip_handler();
+    //}
 
-    hour = ((clock_time() / CLOCK_SECOND) / 3600);
-    minute = ((clock_time() / CLOCK_SECOND) / 60);
-    mod = minute % 60;
+    //hour = ((clock_time() / CLOCK_SECOND) / 3600);
+    //minute = ((clock_time() / CLOCK_SECOND) / 60);
+    //mod = minute % 60;
 
     //printf("TEMPO Hora: %d Minuto: %d \n", hour, minute);
 /*
@@ -565,26 +622,28 @@ etimer_set(&et, CLOCK_SECOND*SECONDS);
       }else
       {
         printf("Saiu do MOD Schedule 4-5\n");
-        change_instance_status(1, 10);
+        change_instance_status(1,  10);
         change_instance_status(3, 20);
         change_instance_status(3, 30);
       }
 
     }
-
 */
+
+/*
     if(etimer_expired(&periodic_send))
     {
       int status10 = get_instance_status(instance_ids[0]);
-      int status20 = get_instance_status(20);
-
-      if(status10 == 2 || status20 == 2)
+      int status20 = get_instance_status(instance_ids[1]);
+      printf("status10: %d | status20: %d\n", status10, status20);
+      if(status10 == 1 || status20 == 1)
       {
         printf("Enviando mensagem\n");
-        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+        ctimer_set(&backoff_timer, CLOCK_SECOND*10, send_packet, NULL);
       }
       etimer_reset(&periodic_send);
     }
+*/    
   }
 
   PROCESS_END();
